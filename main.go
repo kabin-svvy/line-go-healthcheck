@@ -23,9 +23,20 @@ func (h *UploadResponse) transformUploadCsv(data string) {
 	h.Site = strings.Split(data, ",")
 }
 
+func (h *UploadResponse) removeSite(s []int) {
+	for _, v := range s {
+		h.Site = append(h.Site[:v], h.Site[v+1:]...)
+	}
+}
+
 func (h *UploadResponse) sitePing() {
+	removeIndex := []int{}
 	for k, v := range h.Site {
 		v = strings.Replace(strings.Replace(v, "\n", "", -1), "\r", "", -1)
+		if len(v) == 0 {
+			removeIndex = append(removeIndex, k)
+			continue
+		}
 		h.Site[k] = v
 		h.Total = h.Total + 1
 		resp, err := http.Get(v)
@@ -36,6 +47,9 @@ func (h *UploadResponse) sitePing() {
 		if resp != nil && resp.StatusCode == http.StatusOK {
 			h.Success = h.Success + 1
 		}
+	}
+	if len(removeIndex) > 0 {
+		h.removeSite(removeIndex)
 	}
 }
 
